@@ -1,0 +1,105 @@
+
+.margin_tab_right a:hover {
+    transition: all 0.4s;
+    font-weight: 700;
+    font-size: 200%;
+}
+.margin_tab_right {
+    transition: all 0.4s;   
+}
+html {
+    scroll-behavior: smooth;
+}
+.port{
+    transition: all 0.4s;
+    font-size: 150%;
+    font-family: "Montserrat", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: normal;
+}
+.contract {
+    transition: all 0.4s;
+    margin-left: 3%;
+    font-size: 150%;
+    font-family: "Montserrat", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: normal;
+}
+.work {
+    transition: all 0.4s;
+    margin-left: 3%;
+    margin-right: 2%;
+    font-size: 150%;
+    font-family: "Montserrat", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: normal; 
+}
+.logofont {
+    font-family: "Poetsen One", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+a {
+    text-decoration: none;
+  }
+.backgroundfit {
+    background: url(MADOHOMU.png);
+    background-color: #e88fa0;
+    background-size: 100%;
+    background-repeat: no-repeat;
+}
+.about {
+    background-color: rgb(255, 255, 255);
+    opacity: 90%;
+    width: 70%;
+    height: 100%;
+    margin-left: 15%;
+    margin-top: 10%;
+}
+.ABOUTME {
+    font-size: 300%;
+    font-family: "Poppins", sans-serif;
+    font-weight: 700;
+    font-style: normal;
+}
+.paragraph_ABOUTME {
+    font-size: 75%;
+    font-family: "Poppins", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+.email {
+    font-size: 50%
+}
+.margin_tab_left {
+    position: fixed;
+    width: 50%;
+    height: 15%;
+    margin-left: 0.5%;
+    margin-top: 1%;
+    z-index: 2048;
+}
+.contact {
+    margin-left: 3%;
+    margin-top: 10%;
+}
+.head {
+    margin-left: 4%;
+    font-size: 300%;
+    margin-top: 10%;
+    margin-bottom: 50%;
+    font-family: "Poetsen One", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+.margin_tab_right {
+    position: fixed;
+    width: 50%;
+    height: 10%;
+    margin-left: 60%;
+    margin-top: 4%;
+    z-index: 2048;
+}
