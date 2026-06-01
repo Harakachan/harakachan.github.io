@@ -3,16 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link rel="icon" type="image/png" href="Re.png">
   <meta name="theme-color" content="#FAF7F2" />
   <title>ReFocus — Study Discipline RPG</title>
-
+  <link rel="icon" type="image/png" href="Re.png">
   <!-- Tailwind (JIT, supports arbitrary values) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       darkMode: "class",
-      theme: {
+      theme: {a
         extend: {
           colors: {
             base: "var(--c-base)", surface: "var(--c-surface)", surface2: "var(--c-surface2)",
@@ -466,7 +465,12 @@ function LoginScreen({ dark, setDark, onLogin }) {
 // --- First-run setup: goal + reminder + pride picture ----------------------
 function OnboardingScreen({ dark, setDark, targetGoal, setTargetGoal, reminderQuestion, setReminderQuestion, prideEmoji, setPrideEmoji, prideImage, setPrideImage, onDone }) {
   const [step, setStep] = useState(0);
-  const goalChips = ["HKU — Quantitative Finance", "CUHK — Business Administration", "CityU — Business Analytics", "Chula — Commerce & Accountancy (BBA)"];
+  const goalChips = [
+    "Mahidol — Information & Communication Technology (ICT)",
+    "Mahidol — Digital Science and Technology (DST)",
+    "Chulalongkorn — Commerce & Accountancy (BBA)",
+    "Thammasat — Business Administration (BBA)",
+  ];
   const reminderChips = ["Is this who you truly want to be?", "Will this get me into my dream school?", "Future me is watching.", "Stay on target. 🎯"];
   const emojis = ["🎓", "🏛️", "💼", "📈", "🏆", "🌟", "🧠", "💰"];
   const steps = [
@@ -496,7 +500,7 @@ function OnboardingScreen({ dark, setDark, targetGoal, setTargetGoal, reminderQu
 
           {step === 0 && (
             <>
-              <input value={targetGoal} onChange={(e) => setTargetGoal(e.target.value)} placeholder="e.g. Chula — Commerce & Accountancy"
+              <input value={targetGoal} onChange={(e) => setTargetGoal(e.target.value)} placeholder="e.g. Mahidol — Faculty of ICT"
                 className="w-full bg-card text-ink border-2 border-line rounded-lg px-3 py-3 text-sm outline-none focus:border-[#7FB069] mb-3" />
               <p className="pixel-font text-[8px] text-muted mb-2">QUICK PICKS</p>
               <div className="flex flex-col gap-2">
@@ -559,7 +563,7 @@ function App() {
   const [onboarded, setOnboarded] = useState(false);
 
   const [reminderQuestion, setReminderQuestion] = useState("Is this who you truly want to be?");
-  const [targetGoal, setTargetGoal] = useState("HKU — Quantitative Finance");
+  const [targetGoal, setTargetGoal] = useState("Mahidol — Information & Communication Technology (ICT)");
   const [prideEmoji, setPrideEmoji] = useState("🎓");
   const [prideImage, setPrideImage] = useState(null); // optional uploaded photo (data URL)
 
@@ -760,7 +764,7 @@ function App() {
           {view === "home" && <HomeView {...{ targetGoal, prideEmoji, prideImage, boss, bossPalette, gold, weaponLevel, armorLevel, coopBuff, setCoopBuff, setView, openGate }} />}
           {view === "focus" && <FocusView {...{ boss, bossPalette, focusRunning, focusElapsed, hitFlash, coopBuff, weaponLevel, startFocus, giveUpFocus }} />}
           {view === "battle" && <BattleView {...{ boss, bossPalette, hitFlash, gold, weaponLevel, armorLevel, coopBuff, buyWeapon, buyArmor }} />}
-          {view === "leaderboard" && <LeaderboardView lbTab={lbTab} setLbTab={setLbTab} />}
+          {view === "leaderboard" && <LeaderboardView lbTab={lbTab} setLbTab={setLbTab} targetGoal={targetGoal} />}
           {view === "stats" && <StatsView focusOnSec={focusOnSec} focusOffSec={focusOffSec} distracted={distracted} />}
           {view === "settings" && <SettingsView {...{ reminderQuestion, setReminderQuestion, targetGoal, setTargetGoal, prideEmoji, setPrideEmoji, prideImage, setPrideImage, coopBuff, setCoopBuff, dark, setDark }} />}
         </main>
@@ -964,7 +968,7 @@ function BattleView({ boss, bossPalette, hitFlash, gold, weaponLevel, armorLevel
   );
 }
 
-function LeaderboardView({ lbTab, setLbTab }) {
+function LeaderboardView({ lbTab, setLbTab, targetGoal }) {
   const data = {
     friends: [
       { name: "Mina", score: 420, tag: "Co-op streak 12d" },
@@ -974,11 +978,11 @@ function LeaderboardView({ lbTab, setLbTab }) {
       { name: "Ploy", score: 150, tag: "New" },
     ],
     cohort: [
-      { name: "Aaron L.", score: 988, tag: "HKU QFIN" },
-      { name: "Sophie W.", score: 902, tag: "HKU QFIN" },
-      { name: "Tan R.", score: 770, tag: "HKU QFIN" },
-      { name: "You", score: 365, tag: "HKU QFIN", me: true },
-      { name: "Jin H.", score: 240, tag: "HKU QFIN" },
+      { name: "Praew", score: 988, tag: "Same goal 🎯" },
+      { name: "Tas", score: 902, tag: "Same goal 🎯" },
+      { name: "Beam", score: 770, tag: "Same goal 🎯" },
+      { name: "You", score: 365, tag: "Same goal 🎯", me: true },
+      { name: "Mind", score: 240, tag: "Same goal 🎯" },
     ],
   };
   const tabs = [
@@ -997,7 +1001,7 @@ function LeaderboardView({ lbTab, setLbTab }) {
           </button>
         ))}
       </div>
-      {lbTab === "cohort" && <p className="text-[11px] text-muted -mt-1 text-center">Students targeting <b>HKU — Quantitative Finance</b></p>}
+      {lbTab === "cohort" && <p className="text-[11px] text-muted -mt-1 text-center">Students targeting <b>{targetGoal}</b></p>}
       <div className="space-y-2">
         {data[lbTab].map((row, i) => (
           <div key={row.name} className={`pixel-box flex items-center gap-3 p-3 rounded-xl border-2 ${row.me ? "bg-okbg border-[#7FB069]" : "bg-card border-line"}`}>
