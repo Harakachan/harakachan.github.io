@@ -124,6 +124,9 @@ const ICONS = {
   crown: '<path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
   moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  chart: '<line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/>',
+  mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
 };
 const FILLED = new Set(["play", "zap"]);
 function Icon({ name, size = 18, className = "", style }) {
@@ -280,6 +283,8 @@ const STUDY_KEYWORDS = [
 
 const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 const fmtTime = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+const DIM_MS = 15000; // auto-dim the focus screen after 15s of no interaction
+function readImageFile(file, cb) { if (!file) return; const r = new FileReader(); r.onload = () => cb(r.result); r.readAsDataURL(file); }
 
 // --- Pixel-art renderer -----------------------------------------------------
 function PixelArt({ art, palette, scale = 8 }) {
@@ -388,14 +393,175 @@ function ShopRow({ title, desc, cost, owned, gold, onBuy, color }) {
   );
 }
 
+// --- Brand logo: "R" + target + arrow, matching the app icon (theme-aware) -
+function LogoMark({ size = 104 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 120 120" style={{ display: "block" }}>
+      {/* letter R — shadow then main, two-tone like the app icon */}
+      <text x="20" y="99" fontFamily="'Arial Black','Helvetica Neue',Arial,sans-serif" fontWeight="900" fontSize="112" fill="#2E8B57">R</text>
+      <text x="17" y="96" fontFamily="'Arial Black','Helvetica Neue',Arial,sans-serif" fontWeight="900" fontSize="112" fill="#4FB97E">R</text>
+      {/* target sitting inside the R */}
+      <circle cx="72" cy="64" r="25" fill="#2E8B57" />
+      <circle cx="72" cy="64" r="19.5" fill="#FFFFFF" />
+      <circle cx="72" cy="64" r="13" fill="#C7D29A" />
+      <circle cx="72" cy="64" r="6.5" fill="#FFFFFF" />
+      <circle cx="72" cy="64" r="2.8" fill="#2E8B57" />
+      {/* arrow striking the bullseye from the top-right */}
+      <g transform="rotate(-38 72 64)">
+        <line x1="116" y1="64" x2="76" y2="64" stroke="#2E8B57" strokeWidth="6.5" strokeLinecap="round" />
+        <path d="M66 64 L84 54 L84 74 Z" fill="#2E8B57" />
+        <path d="M113 57 l9 7 l-9 7" fill="none" stroke="#3FA46A" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+    </svg>
+  );
+}
+
+// --- Minimal, elegant login screen -----------------------------------------
+function LoginScreen({ dark, setDark, onLogin }) {
+  const [email, setEmail] = useState("jada@refocus.app");
+  const [pw, setPw] = useState("");
+  return (
+    <div className="min-h-screen w-full bg-base flex justify-center" style={{ fontFamily: "ui-sans-serif, system-ui, sans-serif" }}>
+      <div className="relative w-full max-w-md min-h-screen bg-surface flex flex-col px-7 py-10 shadow-2xl text-ink">
+        <button onClick={() => setDark((d) => !d)} title="Toggle dark mode"
+          className="absolute top-5 right-5 bg-card text-ink border-2 border-line rounded-full p-2 pixel-btn">
+          <Icon name={dark ? "sun" : "moon"} size={14} className="text-[#E6B84F]" />
+        </button>
+
+        <div className="flex-1 flex flex-col justify-center items-center text-center">
+          <div className="floaty mb-5"><LogoMark size={108} /></div>
+          <h1 className="pixel-font text-xl text-[#2E8B57]">Re<span className="text-ink">Focus</span></h1>
+          <p className="text-sm text-muted mt-2 mb-8">Aim at your goal. Beat the distraction.</p>
+
+          <div className="w-full space-y-3 text-left">
+            <label className="block">
+              <span className="pixel-font text-[8px] text-muted flex items-center gap-1 mb-1.5"><Icon name="mail" size={10} /> EMAIL</span>
+              <input value={email} onChange={(e) => setEmail(e.target.value)} type="email"
+                className="w-full bg-card text-ink border-2 border-line rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#7FB069]" />
+            </label>
+            <label className="block">
+              <span className="pixel-font text-[8px] text-muted flex items-center gap-1 mb-1.5"><Icon name="lock" size={10} /> PASSWORD</span>
+              <input value={pw} onChange={(e) => setPw(e.target.value)} type="password" placeholder="••••••••"
+                className="w-full bg-card text-ink border-2 border-line rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#7FB069]" />
+            </label>
+          </div>
+
+          <PixelButton onClick={onLogin} color="#2E8B57" className="w-full mt-5">Log In</PixelButton>
+
+          <div className="flex items-center gap-3 w-full my-4">
+            <div className="flex-1 h-px bg-line" /><span className="text-[10px] text-faint">or</span><div className="flex-1 h-px bg-line" />
+          </div>
+          <button onClick={onLogin} className="text-[12px] text-[#7FB069] font-semibold pixel-btn bg-card border-2 border-line rounded-lg px-4 py-2.5 w-full">
+            Continue as guest
+          </button>
+          <p className="text-[11px] text-muted mt-4">New here? <span className="text-[#2E8B57] font-semibold">Create an account</span></p>
+        </div>
+
+        <p className="text-center text-[10px] text-faint mt-6">By continuing you agree to focus on what matters ✨</p>
+      </div>
+    </div>
+  );
+}
+
+// --- First-run setup: goal + reminder + pride picture ----------------------
+function OnboardingScreen({ dark, setDark, targetGoal, setTargetGoal, reminderQuestion, setReminderQuestion, prideEmoji, setPrideEmoji, prideImage, setPrideImage, onDone }) {
+  const [step, setStep] = useState(0);
+  const goalChips = ["HKU — Quantitative Finance", "CUHK — Business Administration", "CityU — Business Analytics", "Chula — Commerce & Accountancy (BBA)"];
+  const reminderChips = ["Is this who you truly want to be?", "Will this get me into my dream school?", "Future me is watching.", "Stay on target. 🎯"];
+  const emojis = ["🎓", "🏛️", "💼", "📈", "🏆", "🌟", "🧠", "💰"];
+  const steps = [
+    { title: "What are you aiming for?", sub: "Your one big goal. We'll keep it in front of you every day." },
+    { title: "Your reminder to yourself", sub: "Shown by the Gatekeeper the moment you reach for a distraction." },
+    { title: "Picture your success", sub: "A glimpse of the dream you're working toward." },
+  ];
+  const canNext = step === 0 ? targetGoal.trim().length > 0 : step === 1 ? reminderQuestion.trim().length > 0 : true;
+  const next = () => { if (step < 2) setStep(step + 1); else onDone(); };
+
+  return (
+    <div className="min-h-screen w-full bg-base flex justify-center" style={{ fontFamily: "ui-sans-serif, system-ui, sans-serif" }}>
+      <div className="relative w-full max-w-md min-h-screen bg-surface text-ink flex flex-col px-7 py-8 shadow-2xl">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2"><LogoMark size={34} /><span className="pixel-font text-[12px] text-[#2E8B57]">Re<span className="text-ink">Focus</span></span></div>
+          <button onClick={() => setDark((d) => !d)} title="Toggle dark mode" className="bg-card border-2 border-line rounded-full p-2 pixel-btn"><Icon name={dark ? "sun" : "moon"} size={13} className="text-[#E6B84F]" /></button>
+        </div>
+
+        <div className="flex gap-2 mb-6">
+          {[0, 1, 2].map((i) => (<div key={i} className="h-1.5 flex-1 rounded-full transition-colors" style={{ background: i <= step ? "#2E8B57" : "var(--c-line)" }} />))}
+        </div>
+
+        <div className="flex-1">
+          <p className="pixel-font text-[8px] text-muted mb-2">STEP {step + 1} OF 3</p>
+          <h1 className="text-xl font-bold leading-tight">{steps[step].title}</h1>
+          <p className="text-sm text-muted mt-1 mb-5">{steps[step].sub}</p>
+
+          {step === 0 && (
+            <>
+              <input value={targetGoal} onChange={(e) => setTargetGoal(e.target.value)} placeholder="e.g. Chula — Commerce & Accountancy"
+                className="w-full bg-card text-ink border-2 border-line rounded-lg px-3 py-3 text-sm outline-none focus:border-[#7FB069] mb-3" />
+              <p className="pixel-font text-[8px] text-muted mb-2">QUICK PICKS</p>
+              <div className="flex flex-col gap-2">
+                {goalChips.map((c) => (
+                  <button key={c} onClick={() => setTargetGoal(c)} className={`text-[12px] px-3 py-2.5 rounded-lg border-2 text-left ${targetGoal === c ? "border-[#2E8B57] bg-okbg" : "border-line bg-card"}`}>{c}</button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {step === 1 && (
+            <>
+              <input value={reminderQuestion} onChange={(e) => setReminderQuestion(e.target.value)} placeholder="Write a line that stops you in your tracks…"
+                className="w-full bg-card text-ink border-2 border-line rounded-lg px-3 py-3 text-sm outline-none focus:border-[#7FB069] mb-3" />
+              <p className="pixel-font text-[8px] text-muted mb-2">SUGGESTIONS</p>
+              <div className="flex flex-col gap-2">
+                {reminderChips.map((c) => (
+                  <button key={c} onClick={() => setReminderQuestion(c)} className={`text-[12px] px-3 py-2.5 rounded-lg border-2 text-left ${reminderQuestion === c ? "border-[#2E8B57] bg-okbg" : "border-line bg-card"}`}>"{c}"</button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {step === 2 && (
+            <>
+              <div className="flex flex-col items-center mb-5">
+                <div className="w-28 h-28 rounded-2xl bg-panel border-2 border-dashed border-line2 overflow-hidden flex items-center justify-center text-5xl mb-3">
+                  {prideImage ? <img src={prideImage} alt="goal" className="w-full h-full object-cover" /> : prideEmoji}
+                </div>
+                <label className="text-[12px] text-[#2E8B57] font-semibold pixel-btn bg-card border-2 border-line rounded-lg px-4 py-2 cursor-pointer inline-flex items-center gap-1">
+                  <Icon name="image" size={12} /> Upload a photo
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => readImageFile(e.target.files[0], setPrideImage)} />
+                </label>
+                {prideImage && <button onClick={() => setPrideImage(null)} className="text-[10px] text-muted mt-2 underline">remove photo</button>}
+              </div>
+              <p className="pixel-font text-[8px] text-muted mb-2 text-center">OR PICK AN ICON</p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {emojis.map((e) => (
+                  <button key={e} onClick={() => { setPrideEmoji(e); setPrideImage(null); }} className={`w-11 h-11 rounded-lg text-xl border-2 ${prideEmoji === e && !prideImage ? "border-[#2E8B57] bg-okbg" : "border-line bg-card"}`}>{e}</button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="flex gap-2 mt-6">
+          {step > 0 && <PixelButton onClick={() => setStep(step - 1)} color="var(--c-strong)" text="var(--c-strong-fg)" className="px-5">Back</PixelButton>}
+          <PixelButton onClick={next} disabled={!canNext} color="#2E8B57" className="flex-1">{step < 2 ? "Continue" : "Enter ReFocus →"}</PixelButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ============================================================================
 function App() {
   const [view, setView] = useState("home");
   const [dark, setDark] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [onboarded, setOnboarded] = useState(false);
 
   const [reminderQuestion, setReminderQuestion] = useState("Is this who you truly want to be?");
   const [targetGoal, setTargetGoal] = useState("HKU — Quantitative Finance");
   const [prideEmoji, setPrideEmoji] = useState("🎓");
+  const [prideImage, setPrideImage] = useState(null); // optional uploaded photo (data URL)
 
   const [gold, setGold] = useState(10);
   const [weaponLevel, setWeaponLevel] = useState(1);
@@ -407,6 +573,13 @@ function App() {
   const [focusElapsed, setFocusElapsed] = useState(0);
   const [hitFlash, setHitFlash] = useState(false);
   const [lastHit, setLastHit] = useState({ id: 0, dmg: 0 }); // drives battle attack animation
+
+  // --- Screen-time tracking (seeded with sample "today" data) ---
+  const [screenDimmed, setScreenDimmed] = useState(false);
+  const [focusOnSec, setFocusOnSec] = useState(95 * 60);   // focusing, screen bright
+  const [focusOffSec, setFocusOffSec] = useState(40 * 60); // focusing, screen auto-dimmed
+  const [distracted, setDistracted] = useState({ instagram: 18 * 60, tiktok: 9 * 60, youtube: 5 * 60 }); // seconds per app
+  const lastActivityRef = useRef(Date.now());
 
   const [toast, setToast] = useState(null);
   const [gate, setGate] = useState(null);
@@ -462,11 +635,21 @@ function App() {
     showToast(`${reason}! ${BOSS_NAMES[boss.stage]} counter-attacks — −${loss} Gold`, "bad");
   };
 
+  // Focus tick: advance timer, auto-dim after inactivity, and log screen on/off.
   useEffect(() => {
-    if (!focusRunning) return;
-    const id = setInterval(() => setFocusElapsed((e) => e + 1), 1000);
+    if (!focusRunning) { setScreenDimmed(false); return; }
+    lastActivityRef.current = Date.now();
+    const id = setInterval(() => {
+      setFocusElapsed((e) => e + 1);
+      const idle = Date.now() - lastActivityRef.current;
+      if (idle >= DIM_MS) { setScreenDimmed(true); setFocusOffSec((s) => s + 1); }
+      else { setScreenDimmed(false); setFocusOnSec((s) => s + 1); }
+    }, 1000);
     return () => clearInterval(id);
   }, [focusRunning]);
+
+  const wakeScreen = () => { lastActivityRef.current = Date.now(); setScreenDimmed(false); };
+  const recordDistracted = (appId, seconds) => setDistracted((d) => ({ ...d, [appId]: (d[appId] || 0) + seconds }));
 
   useEffect(() => {
     if (focusElapsed > 0 && focusElapsed % 300 === 0) focusTick();
@@ -496,7 +679,19 @@ function App() {
     else setGate({ ...gate, step: "friction", friction: 15 });
   };
   const proceedToApp = () => setGate({ ...gate, step: "inapp" });
-  const expireSession = () => { const app = gate.app; setGate(null); setReview({ app, step: "q1", extend: 30 }); };
+  const expireSession = () => {
+    const app = gate.app;
+    const sec = gate.durationUnit === "hr" ? gate.durationValue * 3600 : gate.durationValue * 60;
+    recordDistracted(app.id, sec); // log the full allotted distracting time
+    setGate(null);
+    setReview({ app, step: "q1", extend: 30 });
+  };
+  const leaveAppEarly = () => {
+    const app = gate.app;
+    recordDistracted(app.id, 60); // a quick 1-minute peek
+    showToast(`Logged 1 min in ${app.name}.`, "info");
+    setGate(null);
+  };
 
   const buyWeapon = (lvl) => {
     const cost = WEAPON[lvl].cost;
@@ -529,6 +724,17 @@ function App() {
     borderColor: type === "bad" ? "#E88A8A" : type === "good" ? "#7FB069" : "var(--c-line)",
   });
 
+  // Gate the whole app behind login, then first-run goal setup.
+  if (!loggedIn) return <LoginScreen dark={dark} setDark={setDark} onLogin={() => setLoggedIn(true)} />;
+  if (!onboarded) return (
+    <OnboardingScreen dark={dark} setDark={setDark}
+      targetGoal={targetGoal} setTargetGoal={setTargetGoal}
+      reminderQuestion={reminderQuestion} setReminderQuestion={setReminderQuestion}
+      prideEmoji={prideEmoji} setPrideEmoji={setPrideEmoji}
+      prideImage={prideImage} setPrideImage={setPrideImage}
+      onDone={() => setOnboarded(true)} />
+  );
+
   return (
     <div className="min-h-screen w-full bg-base flex justify-center text-ink"
          style={{ fontFamily: "ui-sans-serif, system-ui, sans-serif" }}>
@@ -551,11 +757,12 @@ function App() {
         </header>
 
         <main className="flex-1 overflow-y-auto px-4 py-4 pb-28">
-          {view === "home" && <HomeView {...{ targetGoal, prideEmoji, boss, bossPalette, gold, weaponLevel, armorLevel, coopBuff, setCoopBuff, setView, openGate }} />}
+          {view === "home" && <HomeView {...{ targetGoal, prideEmoji, prideImage, boss, bossPalette, gold, weaponLevel, armorLevel, coopBuff, setCoopBuff, setView, openGate }} />}
           {view === "focus" && <FocusView {...{ boss, bossPalette, focusRunning, focusElapsed, hitFlash, coopBuff, weaponLevel, startFocus, giveUpFocus }} />}
           {view === "battle" && <BattleView {...{ boss, bossPalette, hitFlash, gold, weaponLevel, armorLevel, coopBuff, buyWeapon, buyArmor }} />}
           {view === "leaderboard" && <LeaderboardView lbTab={lbTab} setLbTab={setLbTab} />}
-          {view === "settings" && <SettingsView {...{ reminderQuestion, setReminderQuestion, targetGoal, setTargetGoal, prideEmoji, setPrideEmoji, coopBuff, setCoopBuff, dark, setDark }} />}
+          {view === "stats" && <StatsView focusOnSec={focusOnSec} focusOffSec={focusOffSec} distracted={distracted} />}
+          {view === "settings" && <SettingsView {...{ reminderQuestion, setReminderQuestion, targetGoal, setTargetGoal, prideEmoji, setPrideEmoji, prideImage, setPrideImage, coopBuff, setCoopBuff, dark, setDark }} />}
         </main>
 
         <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-surface2 border-t-2 border-line flex justify-around px-2 py-2 z-20">
@@ -564,19 +771,21 @@ function App() {
             { id: "focus", label: "Focus", icon: "clock" },
             { id: "battle", label: "Battle", icon: "swords" },
             { id: "leaderboard", label: "Ranks", icon: "trophy" },
+            { id: "stats", label: "Stats", icon: "chart" },
             { id: "settings", label: "Setup", icon: "settings" },
           ].map(({ id, label, icon }) => (
             <button key={id} onClick={() => setView(id)}
-              className={`flex flex-col items-center gap-1 px-2 py-1 rounded-lg ${view === id ? "bg-[#7FB069] text-white" : "text-muted"}`}>
+              className={`flex flex-col items-center gap-1 px-1.5 py-1 rounded-lg ${view === id ? "bg-[#7FB069] text-white" : "text-muted"}`}>
               <Icon name={icon} size={18} /><span className="pixel-font text-[7px]">{label}</span>
             </button>
           ))}
         </nav>
 
         <DevPanel open={devOpen} setOpen={setDevOpen}
-          onTick={focusTick}
+          onTick={() => { focusTick(); (screenDimmed ? setFocusOffSec : setFocusOnSec)((s) => s + 300); }}
           onEarlyExit={() => { setFocusRunning(false); setFocusElapsed(0); bossCounterAttack("Simulated early exit"); }}
-          onDistract={() => openGate(APPS[0])} />
+          onDistract={() => openGate(APPS[0])}
+          onDim={() => { lastActivityRef.current = Date.now() - DIM_MS - 5000; setScreenDimmed(true); }} />
 
         {toast && (
           <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[70] w-[90%] max-w-sm">
@@ -586,9 +795,10 @@ function App() {
 
         {gate && (
           <Modal onClose={() => setGate(null)} hideClose={gate.step === "friction"}>
-            <GateContent gate={gate} setGate={setGate} reminderQuestion={reminderQuestion} prideEmoji={prideEmoji}
+            <GateContent gate={gate} setGate={setGate} reminderQuestion={reminderQuestion} prideEmoji={prideEmoji} prideImage={prideImage}
               targetGoal={targetGoal} aligned={isAligned(gate.reason)} onSubmit={submitGateForm} onProceed={proceedToApp}
-              onExpire={expireSession} onLeave={() => { showToast("Good call — you chose your goal. 💪", "good"); setGate(null); }} />
+              onExpire={expireSession} onLeaveApp={leaveAppEarly}
+              onLeave={() => { showToast("Good call — you chose your goal. 💪", "good"); setGate(null); }} />
           </Modal>
         )}
 
@@ -600,7 +810,8 @@ function App() {
 
         {focusRunning && (
           <FocusBattle boss={boss} bossPalette={bossPalette} coopBuff={coopBuff} weaponLevel={weaponLevel}
-            focusElapsed={focusElapsed} lastHit={lastHit} onGiveUp={giveUpFocus} />
+            focusElapsed={focusElapsed} lastHit={lastHit} onGiveUp={giveUpFocus}
+            screenDimmed={screenDimmed} onWake={wakeScreen} />
         )}
       </div>
     </div>
@@ -608,7 +819,7 @@ function App() {
 }
 
 /* ============================== VIEWS ====================================== */
-function HomeView({ targetGoal, prideEmoji, boss, bossPalette, gold, weaponLevel, armorLevel, coopBuff, setCoopBuff, setView, openGate }) {
+function HomeView({ targetGoal, prideEmoji, prideImage, boss, bossPalette, gold, weaponLevel, armorLevel, coopBuff, setCoopBuff, setView, openGate }) {
   return (
     <div className="space-y-4">
       <div>
@@ -618,7 +829,9 @@ function HomeView({ targetGoal, prideEmoji, boss, bossPalette, gold, weaponLevel
 
       <Card className="bg-gradient-to-br from-card to-surface2">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-lg bg-panel border-2 border-line flex items-center justify-center text-2xl">{prideEmoji}</div>
+          <div className="w-12 h-12 rounded-lg bg-panel border-2 border-line overflow-hidden flex items-center justify-center text-2xl">
+            {prideImage ? <img src={prideImage} alt="" className="w-full h-full object-cover" /> : prideEmoji}
+          </div>
           <div className="flex-1">
             <p className="pixel-font text-[8px] text-muted mb-1 flex items-center gap-1"><Icon name="target" size={10} /> YOUR GOAL</p>
             <p className="text-sm font-semibold leading-tight">{targetGoal}</p>
@@ -767,18 +980,10 @@ function LeaderboardView({ lbTab, setLbTab }) {
       { name: "You", score: 365, tag: "HKU QFIN", me: true },
       { name: "Jin H.", score: 240, tag: "HKU QFIN" },
     ],
-    global: [
-      { name: "focus_god", score: 24890, tag: "🌍 #1" },
-      { name: "study_machine", score: 21044, tag: "🌍 #2" },
-      { name: "noscroll_zoe", score: 19877, tag: "🌍 #3" },
-      { name: "deepwork_dan", score: 17560, tag: "🌍 #4" },
-      { name: "You", score: 365, tag: "Rank #48,221", me: true },
-    ],
   };
   const tabs = [
     { id: "friends", label: "Friends", icon: "users" },
     { id: "cohort", label: "Cohort", icon: "target" },
-    { id: "global", label: "Global", icon: "trophy" },
   ];
   const medals = ["🥇", "🥈", "🥉"];
   return (
@@ -807,7 +1012,7 @@ function LeaderboardView({ lbTab, setLbTab }) {
   );
 }
 
-function SettingsView({ reminderQuestion, setReminderQuestion, targetGoal, setTargetGoal, prideEmoji, setPrideEmoji, coopBuff, setCoopBuff, dark, setDark }) {
+function SettingsView({ reminderQuestion, setReminderQuestion, targetGoal, setTargetGoal, prideEmoji, setPrideEmoji, prideImage, setPrideImage, coopBuff, setCoopBuff, dark, setDark }) {
   const emojis = ["🎓","🏛️","💼","📈","🏆","🌟","🧠","💰"];
   return (
     <div className="space-y-4">
@@ -833,12 +1038,21 @@ function SettingsView({ reminderQuestion, setReminderQuestion, targetGoal, setTa
       <Card>
         <label className="pixel-font text-[9px] flex items-center gap-1 mb-2"><Icon name="image" size={11} className="text-[#C3A0E8]" /> PRIDE / SUCCESS PICTURE</label>
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-20 h-20 rounded-xl bg-panel border-2 border-dashed border-line2 flex items-center justify-center text-4xl">{prideEmoji}</div>
-          <p className="text-[11px] text-muted flex-1">Placeholder for the photo of your dream. Pick an icon for now:</p>
+          <div className="w-20 h-20 rounded-xl bg-panel border-2 border-dashed border-line2 overflow-hidden flex items-center justify-center text-4xl">
+            {prideImage ? <img src={prideImage} alt="" className="w-full h-full object-cover" /> : prideEmoji}
+          </div>
+          <div className="flex-1">
+            <p className="text-[11px] text-muted mb-2">A photo of your dream — or pick an icon below.</p>
+            <label className="text-[11px] text-[#2E8B57] font-semibold pixel-btn bg-card border-2 border-line rounded-lg px-3 py-1.5 cursor-pointer inline-flex items-center gap-1">
+              <Icon name="image" size={11} /> Upload
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => readImageFile(e.target.files[0], setPrideImage)} />
+            </label>
+            {prideImage && <button onClick={() => setPrideImage(null)} className="text-[10px] text-muted ml-2 underline">remove</button>}
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           {emojis.map((e) => (
-            <button key={e} onClick={() => setPrideEmoji(e)} className={`w-10 h-10 rounded-lg text-xl border-2 ${prideEmoji === e ? "border-[#7FB069] bg-okbg" : "border-line bg-card"}`}>{e}</button>
+            <button key={e} onClick={() => { setPrideEmoji(e); setPrideImage(null); }} className={`w-10 h-10 rounded-lg text-xl border-2 ${prideEmoji === e && !prideImage ? "border-[#7FB069] bg-okbg" : "border-line bg-card"}`}>{e}</button>
           ))}
         </div>
       </Card>
@@ -852,8 +1066,92 @@ function SettingsView({ reminderQuestion, setReminderQuestion, targetGoal, setTa
   );
 }
 
+/* ============================== STATS / SCREEN TIME ======================== */
+function StatsView({ focusOnSec, focusOffSec, distracted }) {
+  const min = (s) => Math.round(s / 60);
+  const fmtHM = (m) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`);
+  const focusOn = min(focusOnSec), focusOff = min(focusOffSec);
+  const focusTotal = focusOn + focusOff;
+  const appList = APPS.map((a) => ({ ...a, m: min(distracted[a.id] || 0) })).sort((a, b) => b.m - a.m);
+  const distractedTotal = appList.reduce((s, a) => s + a.m, 0);
+  const grand = focusTotal + distractedTotal;
+  const focusPct = grand ? Math.round((focusTotal / grand) * 100) : 0;
+  const onPct = focusTotal ? Math.round((focusOn / focusTotal) * 100) : 0;
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-bold flex items-center gap-2"><Icon name="chart" size={18} className="text-[#7FB069]" /> Screen Time</h2>
+        <p className="text-[11px] text-muted">Today, while ReFocus is open</p>
+      </div>
+
+      {/* Total + focus/distracted split */}
+      <Card>
+        <div className="flex items-end justify-between mb-3">
+          <div><p className="pixel-font text-[8px] text-muted mb-1">TOTAL ON SCREEN</p><p className="text-2xl font-bold">{fmtHM(grand)}</p></div>
+          <div className="text-right pixel-font text-[9px] text-[#7FB069]">{focusPct}% focused</div>
+        </div>
+        <div className="h-4 w-full rounded-md border-2 border-line overflow-hidden flex">
+          <div style={{ width: `${focusPct}%`, background: "#7FB069" }} />
+          <div style={{ width: `${100 - focusPct}%`, background: "#E6B84F" }} />
+        </div>
+        <div className="flex justify-between text-[10px] mt-2 text-sub">
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm" style={{ background: "#7FB069" }} /> Focus {fmtHM(focusTotal)}</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm" style={{ background: "#E6B84F" }} /> Distracted {fmtHM(distractedTotal)}</span>
+        </div>
+      </Card>
+
+      {/* While focusing: screen on vs auto-dimmed */}
+      <Card>
+        <p className="pixel-font text-[9px] mb-1 flex items-center gap-1"><Icon name="clock" size={11} className="text-[#7FB069]" /> WHILE FOCUSING</p>
+        <p className="text-[11px] text-muted mb-3">Screen bright vs auto-dimmed</p>
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="bg-surface border-2 border-line rounded-lg p-3 text-center">
+            <Icon name="sun" size={16} className="mx-auto text-[#E6B84F]" />
+            <p className="pixel-font text-[13px] mt-1">{focusOn}m</p><p className="text-[9px] text-muted">screen on</p>
+          </div>
+          <div className="bg-surface border-2 border-line rounded-lg p-3 text-center">
+            <Icon name="moon" size={16} className="mx-auto text-[#8FB7E8]" />
+            <p className="pixel-font text-[13px] mt-1">{focusOff}m</p><p className="text-[9px] text-muted">dimmed</p>
+          </div>
+        </div>
+        <div className="h-3 w-full rounded-md border-2 border-line overflow-hidden flex">
+          <div style={{ width: `${onPct}%`, background: "#E6B84F" }} />
+          <div style={{ width: `${100 - onPct}%`, background: "#8FB7E8" }} />
+        </div>
+        <p className="text-[10px] text-faint mt-2">🌙 {focusOff}m with the screen dimmed — less glare while you study, focus kept running.</p>
+      </Card>
+
+      {/* Distracting apps breakdown */}
+      <Card>
+        <p className="pixel-font text-[9px] mb-1 flex items-center gap-1"><Icon name="smartphone" size={11} className="text-[#E6B84F]" /> DISTRACTING APPS</p>
+        <p className="text-[11px] text-muted mb-3">Where your non-focus time went</p>
+        {distractedTotal === 0 ? (
+          <p className="text-[12px] text-[#7FB069] text-center py-2">No distractions logged today. 🎯</p>
+        ) : (
+          <div className="space-y-3">
+            {appList.map((a) => {
+              const pct = distractedTotal ? Math.round((a.m / distractedTotal) * 100) : 0;
+              return (
+                <div key={a.id}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: a.color }}><Icon name={a.icon} size={13} className="text-white" /></div>
+                    <span className="text-[12px] font-medium flex-1">{a.name}</span>
+                    <span className="pixel-font text-[9px] text-muted">{a.m}m</span>
+                  </div>
+                  <div className="h-2.5 w-full rounded bg-panel overflow-hidden"><div className="h-full" style={{ width: `${pct}%`, background: a.color }} /></div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
 /* ============================== MODALS ===================================== */
-function GateContent({ gate, setGate, reminderQuestion, prideEmoji, targetGoal, aligned, onSubmit, onProceed, onExpire, onLeave }) {
+function GateContent({ gate, setGate, reminderQuestion, prideEmoji, prideImage, targetGoal, aligned, onSubmit, onProceed, onExpire, onLeaveApp, onLeave }) {
   const { app } = gate;
   if (gate.step === "inapp") {
     return (
@@ -864,7 +1162,7 @@ function GateContent({ gate, setGate, reminderQuestion, prideEmoji, targetGoal, 
         <p className="text-[12px] text-sub mb-4">Allotted time: <b>{gate.durationValue} {gate.durationUnit === "min" ? "min" : "hr"}</b></p>
         <div className="bg-panel rounded-lg p-3 mb-4 text-[11px] text-muted">Doomscrolling… ⏳ The timer is running in the background.</div>
         <PixelButton onClick={onExpire} color="#E6B84F" className="w-full mb-2"><span className="flex items-center justify-center gap-2"><Icon name="clock" size={13} /> Simulate Time Expires</span></PixelButton>
-        <PixelButton onClick={onLeave} color="#7FB069" className="w-full"><span className="flex items-center justify-center gap-2"><Icon name="check" size={13} /> Leave Now (I'm done)</span></PixelButton>
+        <PixelButton onClick={onLeaveApp} color="#7FB069" className="w-full"><span className="flex items-center justify-center gap-2"><Icon name="check" size={13} /> Leave Now (I'm done)</span></PixelButton>
       </div>
     );
   }
@@ -875,7 +1173,7 @@ function GateContent({ gate, setGate, reminderQuestion, prideEmoji, targetGoal, 
         <div className="flex items-center justify-center gap-1 mb-3 text-[#E88A8A]"><Icon name="alert" size={16} /><span className="pixel-font text-[9px]">ALIGNMENT AUDIT</span></div>
         <p className="text-[12px] text-sub mb-3">Your reason doesn't seem to match your goal. Take a breath first.</p>
         <div className="bg-surface border-2 border-line rounded-xl p-4 mb-4">
-          <div className="text-5xl mb-2">{prideEmoji}</div>
+          {prideImage ? <img src={prideImage} alt="" className="w-24 h-24 object-cover rounded-xl mx-auto mb-2" /> : <div className="text-5xl mb-2">{prideEmoji}</div>}
           <p className="pixel-font text-[9px] text-[#7FB069] mb-2">{targetGoal}</p>
           <p className="text-sm font-semibold leading-snug">"{reminderQuestion}"</p>
         </div>
@@ -899,7 +1197,7 @@ function GateContent({ gate, setGate, reminderQuestion, prideEmoji, targetGoal, 
         <p className="pixel-font text-[10px]">Opening {app.name}</p>
       </div>
       <div className="bg-surface border-2 border-line rounded-xl p-4 mb-4 text-center">
-        <div className="text-4xl mb-1">{prideEmoji}</div>
+        {prideImage ? <img src={prideImage} alt="" className="w-20 h-20 object-cover rounded-xl mx-auto mb-2" /> : <div className="text-4xl mb-1">{prideEmoji}</div>}
         <p className="pixel-font text-[8px] text-[#7FB069] mb-2">{targetGoal}</p>
         <p className="text-sm font-semibold leading-snug">"{reminderQuestion}"</p>
       </div>
@@ -965,7 +1263,7 @@ function ReviewContent({ review, setReview, onDone }) {
 }
 
 /* ============================== DEV PANEL ================================== */
-function DevPanel({ open, setOpen, onTick, onEarlyExit, onDistract }) {
+function DevPanel({ open, setOpen, onTick, onEarlyExit, onDistract, onDim }) {
   return (
     <>
       <button onClick={() => setOpen((v) => !v)} className="fixed bottom-24 right-4 z-[60] w-12 h-12 rounded-full bg-[#3B3B4F] text-white flex items-center justify-center pixel-btn" title="Developer / Simulation Panel">
@@ -977,6 +1275,7 @@ function DevPanel({ open, setOpen, onTick, onEarlyExit, onDistract }) {
           <button onClick={onTick} className="w-full text-left text-[11px] bg-white/10 hover:bg-white/20 rounded-lg px-3 py-2 flex items-center gap-2"><Icon name="clock" size={13} className="text-[#7FB069]" /> Simulate 5 Mins Pass</button>
           <button onClick={onEarlyExit} className="w-full text-left text-[11px] bg-white/10 hover:bg-white/20 rounded-lg px-3 py-2 flex items-center gap-2"><Icon name="flag" size={13} className="text-[#E88A8A]" /> Simulate Early Exit</button>
           <button onClick={onDistract} className="w-full text-left text-[11px] bg-white/10 hover:bg-white/20 rounded-lg px-3 py-2 flex items-center gap-2"><Icon name="smartphone" size={13} className="text-[#E6B84F]" /> Trigger Distracting App</button>
+          <button onClick={onDim} className="w-full text-left text-[11px] bg-white/10 hover:bg-white/20 rounded-lg px-3 py-2 flex items-center gap-2"><Icon name="moon" size={13} className="text-[#8FB7E8]" /> Dim Focus Screen</button>
           <p className="text-[9px] text-white/50 leading-snug pt-1">Test every core loop instantly — no real-time waiting.</p>
         </div>
       )}
@@ -995,14 +1294,14 @@ function Flame({ w = 14, h = 20, delay = 0 }) {
 }
 
 /* ===================== FULL-SCREEN FOCUS BATTLE ============================ */
-function FocusBattle({ boss, bossPalette, coopBuff, weaponLevel, focusElapsed, lastHit, onGiveUp }) {
+function FocusBattle({ boss, bossPalette, coopBuff, weaponLevel, focusElapsed, lastHit, onGiveUp, screenDimmed, onWake }) {
   const nextTick = 300 - (focusElapsed % 300);
   const strike = (coopBuff ? 2 : 1) * WEAPON[weaponLevel].dmg;
   const atk = lastHit.id; // changes each hit → remounts keyed nodes to replay animations
   const pct = Math.max(0, (boss.hp / boss.maxHp) * 100);
 
   return (
-    <div className="fixed inset-0 z-30 overflow-hidden select-none" style={{
+    <div onPointerDown={onWake} className="fixed inset-0 z-30 overflow-hidden select-none" style={{
       backgroundColor: "#7CB342",
       backgroundImage:
         "repeating-linear-gradient(0deg, rgba(0,0,0,.05) 0 18px, rgba(255,255,255,.04) 18px 36px)," +
@@ -1143,6 +1442,18 @@ function FocusBattle({ boss, bossPalette, coopBuff, weaponLevel, focusElapsed, l
         <p className="text-white/80 text-[9px] pixel-font text-center px-6">Leaving early lets the boss counter-attack!</p>
         <PixelButton onClick={onGiveUp} color="#E88A8A"><span className="flex items-center gap-2"><Icon name="flag" size={13} /> Give Up</span></PixelButton>
       </div>
+
+      {/* auto-dim layer — keeps the fight running while protecting the reader's eyes */}
+      {screenDimmed && (
+        <div onClick={onWake} className="absolute inset-0 z-[50] flex flex-col items-center justify-center cursor-pointer text-center px-8"
+          style={{ background: "rgba(7,7,11,0.95)", transition: "opacity .6s ease" }}>
+          <div style={{ animation: "idleBob 3s ease-in-out infinite", opacity: 0.35 }}><Icon name="moon" size={42} className="text-white" /></div>
+          <p className="pixel-font text-[9px] text-white/45 mt-4">SCREEN DIMMED</p>
+          <p className="text-[12px] text-white/35 mt-2">Your focus session is still running.</p>
+          <p className="text-[11px] text-white/25 mt-1">Tap anywhere to wake the screen.</p>
+          <p className="pixel-font text-[11px] text-white/30 mt-6">{fmtTime(focusElapsed)} focused</p>
+        </div>
+      )}
     </div>
   );
 }
